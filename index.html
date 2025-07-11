@@ -1,45 +1,45 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="utf-8" />
+  <meta charset="utf-8">
   <title>Web Map Demo</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
 
-  <!-- Leaflet CSS -->
+  <!-- Leaflet CSS (no integrity or crossorigin) -->
   <link
     rel="stylesheet"
     href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-    integrity="sha256-gZ5/IbZ+OQp+VE3TuK8XMwiXGhXE4fZel9Zon3j90+M="
-    crossorigin=""
   />
 
   <style>
-    /* full-screen map */
-    #map { height: 100vh; margin: 0; padding: 0; }
-    body { margin: 0; }
+    /* make the map fill the viewport */
+    html, body, #map {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+    }
   </style>
 </head>
 <body>
+  <!-- sanity check text -->
+  <h1 style="position:absolute;z-index:1000;background:white;margin:0;padding:0.5em;">
+    🚀 HTML Loaded!
+  </h1>
+
+  <!-- your map goes here -->
   <div id="map"></div>
 
-  <!-- Leaflet JS -->
-  <script
-    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-    integrity="sha256-gZ5/IbZ+OQp+VE3TuK8XMwiXGhXE4fZel9Zon3j90+M="
-    crossorigin=""
-  ></script>
-
+  <!-- Leaflet JS (no integrity or crossorigin) -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
-    // Initialize map centered on [lat, lon] at zoom level
+    // initialize the map
     var map = L.map('map').setView([40, -100], 4);
-
-    // Add OpenStreetMap tile layer
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
       attribution: '&copy; OpenStreetMap contributors'
     }).addTo(map);
 
-    // Add a marker example
+    // example marker
     L.marker([40, -100]).addTo(map)
       .bindPopup('Hello from your demo!')
       .openPopup();
