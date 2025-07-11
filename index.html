@@ -22,10 +22,13 @@
 </head>
 <body>
   <!-- basemap selector -->
-  <select id="basemap-select" style="position:absolute;top:10px;left:10px;z-index:1000;">
+  <select id="basemap-select" style="position:absolute;top:10px;right:10px;z-index:1000;">
     <option value="dark">Dark</option>
     <option value="light">Light</option>
   </select>
+
+  <!-- geojson uploader -->
+  <input id="geojson-input" type="file" accept=".geojson,.json" style="position:absolute;top:50px;right:10px;z-index:1000;" />
 
   <!-- your map goes here -->
   <div id="map"></div>
@@ -53,12 +56,41 @@
     });
 
     var currentLayer = baseLayers.dark;
+    var uploadedLayer;
 
     // handle basemap selector
     document.getElementById('basemap-select').addEventListener('change', function (e) {
       map.removeLayer(currentLayer);
       currentLayer = baseLayers[e.target.value];
       currentLayer.addTo(map);
+    });
+
+    // handle geojson upload
+    document.getElementById('geojson-input').addEventListener('change', function (e) {
+      var file = e.target.files[0];
+      if (!file) {
+        return;
+      }
+      var reader = new FileReader();
+      reader.onload = function (event) {
+        var geojson;
+        try {
+          geojson = JSON.parse(event.target.result);
+        } catch (err) {
+          alert('Invalid JSON file');
+          return;
+        }
+        if (uploadedLayer) {
+          map.removeLayer(uploadedLayer);
+        }
+        uploadedLayer = L.geoJSON(geojson).addTo(map);
+        try {
+          map.fitBounds(uploadedLayer.getBounds());
+        } catch (err) {
+          console.error('Could not fit bounds:', err);
+        }
+      };
+      reader.readAsText(file);
     });
 
     // example marker
