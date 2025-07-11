@@ -21,10 +21,11 @@
   </style>
 </head>
 <body>
-  <!-- sanity check text -->
-  <h1 style="position:absolute;z-index:1000;background:white;margin:0;padding:0.5em;">
-    🚀 HTML Loaded!
-  </h1>
+  <!-- basemap selector -->
+  <select id="basemap-select" style="position:absolute;top:10px;left:10px;z-index:1000;">
+    <option value="dark">Dark</option>
+    <option value="light">Light</option>
+  </select>
 
   <!-- your map goes here -->
   <div id="map"></div>
@@ -32,12 +33,33 @@
   <!-- Leaflet JS (no integrity or crossorigin) -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
-    // initialize the map
-    var map = L.map('map').setView([40, -100], 4);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19,
-      attribution: '&copy; OpenStreetMap contributors'
-    }).addTo(map);
+    // basemap layers
+    var baseLayers = {
+      dark: L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        maxZoom: 19,
+        attribution: '&copy; OpenStreetMap contributors &copy; CartoDB'
+      }),
+      light: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; OpenStreetMap contributors'
+      })
+    };
+
+    // initialize the map with the dark basemap
+    var map = L.map('map', {
+      center: [40, -100],
+      zoom: 4,
+      layers: [baseLayers.dark]
+    });
+
+    var currentLayer = baseLayers.dark;
+
+    // handle basemap selector
+    document.getElementById('basemap-select').addEventListener('change', function (e) {
+      map.removeLayer(currentLayer);
+      currentLayer = baseLayers[e.target.value];
+      currentLayer.addTo(map);
+    });
 
     // example marker
     L.marker([40, -100]).addTo(map)
