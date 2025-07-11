@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Web Map Demo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Leaflet CSS -->
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-gZ5/IbZ+OQp+VE3TuK8XMwiXGhXE4fZel9Zon3j90+M="
+    crossorigin=""
+  />
+
+  <style>
+    /* full-screen map */
+    #map { height: 100vh; margin: 0; padding: 0; }
+    body { margin: 0; }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+
+  <!-- Leaflet JS -->
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-gZ5/IbZ+OQp+VE3TuK8XMwiXGhXE4fZel9Zon3j90+M="
+    crossorigin=""
+  ></script>
+
+  <script>
+    // Initialize map centered on [lat, lon] at zoom level
+    var map = L.map('map').setView([40, -100], 4);
+
+    // Add OpenStreetMap tile layer
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    // Add a marker example
+    L.marker([40, -100]).addTo(map)
+      .bindPopup('Hello from your demo!')
+      .openPopup();
+  </script>
+</body>
+</html>
