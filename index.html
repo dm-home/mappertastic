@@ -18,6 +18,12 @@
       margin: 0;
       padding: 0;
     }
+
+    /* larger fonts for UI controls */
+    #basemap-select,
+    #geojson-input {
+      font-size: 1.2em;
+    }
   </style>
 </head>
 <body>
@@ -35,6 +41,8 @@
 
   <!-- Leaflet JS (no integrity or crossorigin) -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <!-- Plugin for editing geometries -->
+  <script src="https://unpkg.com/leaflet-editable@1.2.0/src/Leaflet.Editable.js"></script>
   <script>
     // basemap layers
     var baseLayers = {
@@ -50,6 +58,7 @@
 
     // initialize the map with the dark basemap
     var map = L.map('map', {
+      editable: true,
       center: [40, -100],
       zoom: 4,
       layers: [baseLayers.dark]
@@ -83,7 +92,13 @@
         if (uploadedLayer) {
           map.removeLayer(uploadedLayer);
         }
-        uploadedLayer = L.geoJSON(geojson).addTo(map);
+        uploadedLayer = L.geoJSON(geojson, {
+          onEachFeature: function(feature, layer) {
+            if (layer.enableEdit) {
+              layer.enableEdit();
+            }
+          }
+        }).addTo(map);
         try {
           map.fitBounds(uploadedLayer.getBounds());
         } catch (err) {
