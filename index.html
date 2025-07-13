@@ -1,173 +1,130 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset='utf-8'>
-  <meta name="viewport" content="width=device-width,height=device-height, user-scalable=no" />
-  <title>Leaflet Editable Demo</title>
+  <meta charset="utf-8">
+  <title>Leaflet GeoJSON Upload & Edit (Draw with Flatten)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Leaflet CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <style type='text/css'>
-      body { margin:0; padding:0; }
-      #map { position:absolute; top:0; bottom:0; right: 0; left: 0; width:100%; }
-      #geojson-input { position:absolute; top:10px; right:10px; z-index:1000; font-size:1.2em; }
+  <!-- Leaflet.draw CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
+
+  <style>
+    html, body { height: 100%; margin: 0; padding: 0; }
+    #upload { padding: 0.5em; background: #f9f9f9; }
+    #map { height: calc(100% - 48px); }
   </style>
 </head>
 <body>
-  <!-- geojson uploader -->
-  <input id="geojson-input" type="file" accept=".geojson,.json" />
-  <div id='map'></div>
 
+  <div id="upload">
+    <input type="file" id="fileInput" accept=".json,.geojson" />
+    <!-- <button id="editBtn">Toggle Edit</button> -->
+  </div>
+  <div id="map"></div>
+
+  <!-- Leaflet core JS -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="lib/Path.Drag.js"></script>
-  <script src="lib/Leaflet.Editable.js"></script>
+  <!-- Leaflet.draw JS -->
+  <script src="https://cdn.jsdelivr.net/npm/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
+
   <script>
-var startPoint = [43.1249, 1.254];
-var map = L.map('map', {editable: true}).setView(startPoint, 16),
-    tilelayer = L.tileLayer('https://a.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
-        maxZoom: 20,
-        attribution: 'Data \u00a9 <a href="https://www.openstreetmap.org/copyright"> OpenStreetMap Contributors </a> Tiles \u00a9 HOT'
+    // Initialize the map
+    var map = L.map('map').setView([40, -100], 4);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '&copy; OpenStreetMap contributors'
     }).addTo(map);
 
-L.EditControl = L.Control.extend({
-    options: {
-        position: 'topleft',
-        callback: null,
-        kind: '',
-        html: ''
-    },
+    // Prepare FeatureGroup & draw control (edit only)
+    var drawLayer = L.featureGroup().addTo(map);
+    var drawControl = new L.Control.Draw({ draw: true, edit: { featureGroup: drawLayer } }).addTo(map);
 
-    onAdd: function (map) {
-        var container = L.DomUtil.create('div', 'leaflet-control leaflet-bar'),
-            link = L.DomUtil.create('a', '', container);
+    // // Toggle edit mode button
+    // var editBtn = document.getElementById('editBtn');
+    // editBtn.addEventListener('click', function() {
+    //   var handler = drawControl._toolbars.edit._modes.edit.handler;
+    //   if (!handler.enabled()) {
+    //     handler.enable();
+    //     editBtn.textContent = 'Finish Edit';
+    //   } else {
+    //     handler.disable();
+    //     editBtn.textContent = 'Toggle Edit';
+    //   }
+    // });
 
-        link.href = '#';
-        link.title = 'Create a new ' + this.options.kind;
-        link.innerHTML = this.options.html;
-        L.DomEvent.on(link, 'click', L.DomEvent.stop)
-                  .on(link, 'click', function () {
-                    window.LAYER = this.options.callback.call(map.editTools);
-                  }, this);
-        return container;
+    // After edit event, log updated features
+    map.on('draw:edited', function(e) {
+      var updated = [];
+      e.layers.eachLayer(function(layer) {
+        updated.push(layer.toGeoJSON());
+      });
+      console.log('Edited features:', updated);
+    });
+
+    // Flatten MultiPolygon into individual Polygons
+    function flattenFeatures(features) {
+      var out = [];
+      features.forEach(function(f, idx) {
+        var geom = f.geometry;
+        if (!geom) return;
+        if (geom.type === 'MultiPolygon') {
+          geom.coordinates.forEach(function(polygon) {
+            out.push({
+              type: 'Feature',
+              properties: f.properties || {},
+              geometry: { type: 'Polygon', coordinates: polygon }
+            });
+          });
+        } else {
+          out.push(f);
+        }
+      });
+      return out;
     }
-});
 
-L.NewLineControl = L.EditControl.extend({
-    options: { position: 'topleft', callback: map.editTools.startPolyline, kind: 'line', html: '\\/' }
-});
-L.NewPolygonControl = L.EditControl.extend({
-    options: { position: 'topleft', callback: map.editTools.startPolygon, kind: 'polygon', html: '▰' }
-});
-L.NewMarkerControl = L.EditControl.extend({
-    options: { position: 'topleft', callback: map.editTools.startMarker, kind: 'marker', html: '🖈' }
-});
-L.NewRectangleControl = L.EditControl.extend({
-    options: { position: 'topleft', callback: map.editTools.startRectangle, kind: 'rectangle', html: '⬛' }
-});
-L.NewCircleControl = L.EditControl.extend({
-    options: { position: 'topleft', callback: map.editTools.startCircle, kind: 'circle', html: '⬤' }
-});
-L.NewCircleMarkerControl = L.EditControl.extend({
-    options: { position: 'topleft', callback: map.editTools.startCircleMarker, kind: 'circle marker', html: '◉︎' }
-});
+    // Handle file upload
+    document.getElementById('fileInput').addEventListener('change', function(e) {
+      var file = e.target.files[0]; if (!file) return;
+      var reader = new FileReader();
+      reader.onload = function() {
+        var data;
+        try { data = JSON.parse(reader.result); }
+        catch (err) { return alert('Invalid GeoJSON: ' + err.message); }
 
-map.addControl(new L.NewMarkerControl());
-map.addControl(new L.NewLineControl());
-map.addControl(new L.NewPolygonControl());
-map.addControl(new L.NewRectangleControl());
-map.addControl(new L.NewCircleControl());
-map.addControl(new L.NewCircleMarkerControl());
+        // Wrap single Feature
+        if (data.type === 'Feature') {
+          data = { type: 'FeatureCollection', features: [data] };
+        }
+        if (data.type !== 'FeatureCollection' || !Array.isArray(data.features)) {
+          return alert('GeoJSON must be a FeatureCollection or Feature');
+        }
 
-var line = L.polyline([
-    [43.1292, 1.256],
-    [43.1295, 1.259],
-    [43.1291, 1.261]
-]).addTo(map);
-line.enableEdit();
-line.on('dblclick', L.DomEvent.stop).on('dblclick', line.toggleEdit);
+        // Flatten multipolygons
+        var flat = flattenFeatures(data.features);
+        console.log('Features before:', data.features.length, 'after flatten:', flat.length);
+        var fc = { type: 'FeatureCollection', features: flat };
 
-var multi = L.polygon([
-  [
-    [
-      [43.1239, 1.244],
-      [43.123, 1.253],
-      [43.1252, 1.255],
-      [43.1250, 1.251],
-      [43.1239, 1.244]
-    ],
-    [
-      [43.124, 1.246],
-      [43.1236, 1.248],
-      [43.12475, 1.250]
-    ],
-    [
-      [43.124, 1.251],
-      [43.1236, 1.253],
-      [43.12475, 1.254]
-    ]
-  ],
-  [
-    [
-      [43.1269, 1.246],
-      [43.126, 1.252],
-      [43.1282, 1.255],
-      [43.1280, 1.245]
-    ]
-  ]
-]).addTo(map);
-multi.enableEdit();
-multi.on('dblclick', L.DomEvent.stop).on('dblclick', multi.toggleEdit);
-multi.bindPopup('hi!');
+        // Clear existing layers
+        drawLayer.clearLayers();
 
-var poly = L.polygon([
-  [
-    [43.1239, 1.259],
-    [43.123, 1.263],
-    [43.1252, 1.265],
-    [43.1250, 1.261]
-  ],
-  [
-    [43.124, 1.263],
-    [43.1236, 1.261],
-    [43.12475, 1.262]
-  ]
-]).addTo(map);
-poly.enableEdit();
-poly.on('dblclick', L.DomEvent.stop).on('dblclick', poly.toggleEdit);
+        // Add features to drawLayer
+        L.geoJSON(fc, {
+          onEachFeature: function(feature, layer) {
+            // Only polygons and lines supported
+            drawLayer.addLayer(layer);
+          }
+        });
 
-var rec = L.rectangle([
-    [43.1235, 1.255],
-    [43.1215, 1.259]
-]).addTo(map);
-rec.enableEdit();
-rec.on('dblclick', L.DomEvent.stop).on('dblclick', rec.toggleEdit);
-
-var circle = L.circle([43.1220, 1.250], {radius: 100}).addTo(map);
-circle.enableEdit();
-circle.on('dblclick', L.DomEvent.stop).on('dblclick', circle.toggleEdit);
-
-// handle geojson upload
-var uploadedLayer;
-document.getElementById('geojson-input').addEventListener('change', function (e) {
-  var file = e.target.files[0];
-  if (!file) { return; }
-  var reader = new FileReader();
-  reader.onload = function (event) {
-    var geojson;
-    try {
-      geojson = JSON.parse(event.target.result);
-    } catch (err) {
-      alert('Invalid JSON file');
-      return;
-    }
-    if (uploadedLayer) { map.removeLayer(uploadedLayer); }
-    uploadedLayer = L.geoJSON(geojson, {
-      onEachFeature: function(feature, layer) {
-        if (layer.enableEdit) { layer.enableEdit(); }
-      }
-    }).addTo(map);
-    try { map.fitBounds(uploadedLayer.getBounds()); } catch (err) {}
-  };
-  reader.readAsText(file);
-});
+        // Zoom if valid
+        var bounds = drawLayer.getBounds();
+        if (bounds.isValid()) {
+          map.fitBounds(bounds);
+        }
+      };
+      reader.readAsText(file);
+    });
   </script>
 </body>
 </html>
