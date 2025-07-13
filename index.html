@@ -19,7 +19,7 @@
 <body>
 
   <div id="upload">
-    <input type="file" id="fileInput" accept=".json,.geojson" />
+    <input type="file" id="fileInput" accept=".geojson" />
     <!-- <button id="editBtn">Toggle Edit</button> -->
   </div>
   <div id="map"></div>
@@ -41,26 +41,13 @@
     var drawLayer = L.featureGroup().addTo(map);
     var drawControl = new L.Control.Draw({ draw: true, edit: { featureGroup: drawLayer } }).addTo(map);
 
-    // // Toggle edit mode button
-    // var editBtn = document.getElementById('editBtn');
-    // editBtn.addEventListener('click', function() {
-    //   var handler = drawControl._toolbars.edit._modes.edit.handler;
-    //   if (!handler.enabled()) {
-    //     handler.enable();
-    //     editBtn.textContent = 'Finish Edit';
-    //   } else {
-    //     handler.disable();
-    //     editBtn.textContent = 'Toggle Edit';
-    //   }
-    // });
-
     // After edit event, log updated features
     map.on('draw:edited', function(e) {
       var updated = [];
       e.layers.eachLayer(function(layer) {
         updated.push(layer.toGeoJSON());
       });
-      console.log('Edited features:', updated);
+      // console.log('Edited features:', updated);
     });
 
     // Flatten MultiPolygon into individual Polygons
@@ -103,7 +90,7 @@
 
         // Flatten multipolygons
         var flat = flattenFeatures(data.features);
-        console.log('Features before:', data.features.length, 'after flatten:', flat.length);
+        // console.log('Features before:', data.features.length, 'after flatten:', flat.length);
         var fc = { type: 'FeatureCollection', features: flat };
 
         // Clear existing layers
