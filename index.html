@@ -12,8 +12,9 @@
 
   <style>
     html, body { height: 100%; margin: 0; padding: 0; }
-    #upload { padding: 0.5em; background: #f9f9f9; }
-    #map { height: calc(100% - 48px); }
+    #upload { padding: 0.5em; background: #f9f9f9; font-size: 1.2em; }
+    #fileInput { font-size: 1.2em; }
+    #map { height: calc(100% - 60px); }
   </style>
 </head>
 <body>
@@ -29,13 +30,34 @@
   <!-- Leaflet.draw JS -->
   <script src="https://cdn.jsdelivr.net/npm/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
 
-  <script>
-    // Initialize the map
-    var map = L.map('map').setView([40, -100], 4);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19,
-      attribution: '&copy; OpenStreetMap contributors'
-    }).addTo(map);
+    <script>
+      // Basemap layers
+      var USGS_USImagery = L.tileLayer('https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/{z}/{y}/{x}', {
+        maxZoom: 20,
+        attribution: 'Tiles courtesy of the <a href="https://usgs.gov/">U.S. Geological Survey</a>'
+      });
+
+      var Stadia_AlidadeSatellite = L.tileLayer('https://tiles.stadiamaps.com/tiles/alidade_satellite/{z}/{x}/{y}{r}.{ext}', {
+        minZoom: 0,
+        maxZoom: 20,
+        attribution: '&copy; CNES, Distribution Airbus DS, © Airbus DS, © PlanetObserver (Contains Copernicus Data) | &copy; <a href="https://www.stadiamaps.com/" target="_blank">Stadia Maps</a> &copy; <a href="https://openmaptiles.org/" target="_blank">OpenMapTiles</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        ext: 'jpg'
+      });
+
+      var TopPlusOpen_Grey = L.tileLayer('http://sgx.geodatenzentrum.de/wmts_topplus_open/tile/1.0.0/web_grau/default/WEBMERCATOR/{z}/{y}/{x}.png', {
+        maxZoom: 18,
+        attribution: 'Map data: &copy; <a href="http://www.govdata.de/dl-de/by-2-0">dl-de/by-2-0</a>'
+      });
+
+      var baseMaps = {
+        'USGS Imagery': USGS_USImagery,
+        'Stadia Satellite': Stadia_AlidadeSatellite,
+        'TopPlus Grey': TopPlusOpen_Grey
+      };
+
+      // Initialize the map with the default basemap
+      var map = L.map('map', { layers: [TopPlusOpen_Grey] }).setView([40, -100], 4);
+      L.control.layers(baseMaps).addTo(map);
 
     // Prepare FeatureGroup & draw control (edit only)
     var drawLayer = L.featureGroup().addTo(map);
