@@ -5,25 +5,31 @@
   <title>Leaflet GeoJSON Upload & Edit (Draw with Flatten)</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
   <!-- Leaflet CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <!-- Leaflet.draw CSS -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="style.css" />
 
-  <style>
-    html, body { height: 100%; margin: 0; padding: 0; }
-    #upload { padding: 0.5em; background: #f9f9f9; font-size: 1.2em; }
-    #fileInput { font-size: 1.2em; }
-    #map { height: calc(100% - 60px); }
-  </style>
 </head>
 <body>
 
-  <div id="upload">
-    <input type="file" id="fileInput" accept=".geojson" />
-    <!-- <button id="editBtn">Toggle Edit</button> -->
-  </div>
-  <div id="map"></div>
+  <header>
+    <h1>GeoJSON Editor</h1>
+  </header>
+
+  <main>
+    <div id="upload-container">
+      <input type="file" id="fileInput" accept=".geojson" />
+      <div id="drop-zone">Drag and drop a GeoJSON file here, or click to select a file.</div>
+    </div>
+    <div id="map"></div>
+  </main>
 
   <!-- Leaflet core JS -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -94,8 +100,42 @@
     }
 
     // Handle file upload
-    document.getElementById('fileInput').addEventListener('change', function(e) {
-      var file = e.target.files[0]; if (!file) return;
+    var dropZone = document.getElementById('drop-zone');
+    var fileInput = document.getElementById('fileInput');
+
+    dropZone.addEventListener('click', function() {
+      fileInput.click();
+    });
+
+    dropZone.addEventListener('dragover', function(e) {
+      e.preventDefault();
+      dropZone.style.backgroundColor = '#e2e6ea';
+    });
+
+    dropZone.addEventListener('dragleave', function(e) {
+      e.preventDefault();
+      dropZone.style.backgroundColor = '#f8f9fa';
+    });
+
+    dropZone.addEventListener('drop', function(e) {
+      e.preventDefault();
+      dropZone.style.backgroundColor = '#f8f9fa';
+      var files = e.dataTransfer.files;
+      if (files.length > 0) {
+        fileInput.files = files;
+        handleFile(files[0]);
+      }
+    });
+
+    fileInput.addEventListener('change', function(e) {
+      var file = e.target.files[0];
+      if (file) {
+        handleFile(file);
+      }
+    });
+
+    function handleFile(file) {
+      if (!file) return;
       var reader = new FileReader();
       reader.onload = function() {
         var data;
@@ -133,7 +173,7 @@
         }
       };
       reader.readAsText(file);
-    });
+    }
   </script>
 </body>
 </html>
